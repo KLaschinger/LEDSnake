@@ -65,6 +65,8 @@ void loop() {
   snake.insert(snake.begin(), ledMatrix[currentRow][currentColumn]); // add the the led in front of the snake to the snake's head
   unoccupiedLeds.erase(remove(unoccupiedLeds.begin(), unoccupiedLeds.end(), snake.at(0)), unoccupiedLeds.end()); // remove the led of the snake's new head from the vector of unoccupied leds
   snake.at(0) = CRGB::Blue; // turn on the led that was just added to the front
+
+  if(snake.at(0) == food){generateFood();} // to grow the snake
   
   if(!snakeHasEaten){
     
@@ -73,6 +75,7 @@ void loop() {
     snake.back() = CRGB::Black; // turn off the led that was just removed from the back
     
   }
+  
   snakeHasEaten = false;
   FastLED.show();
 
@@ -101,6 +104,7 @@ void initializeVectors(){
 
 void generateFood(){
 
+  snakeHasEaten = true;
   int randomIndex = rand() % unoccupiedLeds.size();
   food = unoccupiedLeds.at(randomIndex);
   food = CRGB::Green;
