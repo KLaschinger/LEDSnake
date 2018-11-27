@@ -32,15 +32,22 @@
 
 using namespace std;
 
-CRGB ledMatrix[16][16];
-vector<CRGB> snake(3);
-vector<CRGB> unoccupiedLeds(16*16-3);
+CRGB ledMatrix[16][16]; // grid of leds
+vector<int> x; // x values of each led in the snake, in order
+vector<int> y; // y values of each led in the snake, in order
+
+vector<int> unoccupiedX;
+vector<int> unoccupiedY;
 
 char currentDirection = 'r';
 int currentRow = 0;
 int currentColumn = 2;
 
-CRGB food;
+int randomIndex = 0;
+
+CRGB food = ledMatrix[0][8];
+int foodX = 0;
+int foodY = 8;
 bool snakeHasEaten = false;
 
 WiFiServer server(80);
@@ -50,15 +57,9 @@ char password[] = "kurtandpaul";
 
 void setup() {
 
-  Serial.begin(9600);
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB port only
-  }
-
   initializeLedMatrix();
   initializeVectors();
-  generateFood();
-
+  ledMatrix[0][8] = CRGB::Green;
   FastLED.show();
 
   /*if (WiFi.status() == WL_NO_SHIELD) {while(true);} // check for presence of WiFi
@@ -66,7 +67,7 @@ void setup() {
   status = WiFi.beginAP(ssid); // create network
   if (status != WL_AP_LISTENING) {while(true);} // if creation of access point failed
 
-  delay(10000); // allow time for connection
+  delay(5000); // allow time for connection
   if(status == WL_CONNECTED){server.begin();} // start server if connected
   else { while(true); } // if not connected */
   
@@ -86,62 +87,105 @@ void loop() {
   if(currentDirection == 'l'){currentColumn--;}
   if(currentDirection == 'r'){currentColumn++;}
 
-  if(currentRow < 0 || currentRow > 15 || currentColumn < 0 || currentColumn > 15){turnOffAllLeds();} // if the snake hits the boundaries
-  //if(ledMatrix[currentRow][currentColumn] = CRGB::Blue){turnOffAllLeds();} // if the snake hits itself
-  
-  snake.insert(snake.begin(), ledMatrix[currentRow][currentColumn]); // add the the led in front of the snake to the snake's head
-  unoccupiedLeds.erase(remove(unoccupiedLeds.begin(), unoccupiedLeds.end(), snake.at(0)), unoccupiedLeds.end()); // remove the led of the snake's new head from the vector of unoccupied leds
-  snake.at(0) = CRGB::Blue; // turn on the led that was just added to the front of the snake
+  if(x.size() == 256){while(true);} // if the snake is as big as the entire game board
 
-  if(snake.at(0) == food){generateFood();} // to grow the snake
+  if(currentRow < 0 || currentRow > 15 || currentColumn < 0 || currentColumn > 15){turnOffAllLeds();} // if the snake hits the boundaries
+  checkIfSnakeHitsItself(); // if the snake hits itself
   
-  if(!snakeHasEaten){
+  // add the the led in front of the snake to the snake's head
+  x.insert(x.begin(), currentRow);
+  y.insert(y.begin(), currentColumn);
+
+  ledMatrix[x.at(0)][y.at(0)] = CRGB::Blue; // turn on the led that was just added to the head of the snake
+  FastLED.show();
+
+  unoccupiedX.erase(remove(unoccupiedX.begin(), unoccupiedX.end(), currentRow), unoccupiedX.end()); // remove the led that was just added to the head of the snake from the list of unoccupied leds
+  unoccupiedY.erase(remove(unoccupiedY.begin(), unoccupiedY.end(), currentColumn), unoccupiedY.end());
+
+  if(currentRow == foodX && currentColumn == foodY){generateFood();} // to grow the snake when it touches the food
+  
+  if(!snakeHasEaten){ // if the snake doesn't come in contact with the food (which is most of the time)
     
-    unoccupiedLeds.push_back(snake.back()); // add the led that was just removed to the list of unoccupied leds
-    snake.erase( snake.begin() + (snake.size() - 1) ); // take out the back led of the snake
-    snake.back() = CRGB::Black; // turn off the led that was just removed from the back
+    ledMatrix[x.back()][y.back()] = CRGB::Black; // turn off the led that will be removed from the back of the snake
+    FastLED.show();
+    
+    unoccupiedX.push_back(x.back()); // at the back led that will be removed to the list of unoccupied leds
+    unoccupiedY.push_back(y.back());
+    
+    x.erase( x.begin() + (x.size() - 1) ); // take out the back led of the snake
+    y.erase( y.begin() + (y.size() - 1) );
     
   }
-  
+
   snakeHasEaten = false;
-  FastLED.show();
-  delay(250);
+  int randomIndex = random(0, unoccupiedX.size() - 1);
+  delay(200);
 
-}
+} // end of main loop
 
-void generateFood(){
+void generateFood(){ // getting a random led that is currently not lit up
 
   snakeHasEaten = true;
-  int randomIndex = rand() % unoccupiedLeds.size();
-  food = unoccupiedLeds.at(randomIndex);
-  food = CRGB::Green;
+  
+  foodX = unoccupiedX.at(randomIndex);
+  foodY = unoccupiedY.at(randomIndex);
+
+  ledMatrix[foodX][foodY] = CRGB::Green;
+  FastLED.show();
+  
+}
+
+void checkIfSnakeHitsItself(){
+
+  for(int i = 0; i < x.size(); i++){ // look through all leds of the snake
+
+    if(currentRow == x.at(i) && currentColumn == y.at(i)){turnOffAllLeds();} // if the snake's head is already part of the snake
+    
+  }
   
 }
 
 void turnOffAllLeds(){
 
-    food = CRGB::Black;
-    for(int i = 0; i < snake.size(); i++){snake.at(i) = CRGB::Black;} // turn off all leds
+    ledMatrix[foodX][foodY] = CRGB::Black; // turn off food led
     FastLED.show();
-    while(1){}
+    
+    for(int i = 0; i < x.size(); i++){ // turn off snake leds
+      
+      ledMatrix[x.at(i)][y.at(i)] = CRGB::Black;
+      FastLED.show();
+      
+      }
+      
+    while(true);
   
 }
 
 void initializeVectors(){
 
-  snake.push_back(ledMatrix[0][2]); // put the first 3 leds in the snake vector
-  snake.push_back(ledMatrix[0][1]);
-  snake.push_back(ledMatrix[0][0]);
+  x.push_back(0);
+  y.push_back(2);
 
+  x.push_back(0);
+  y.push_back(1);
+
+  x.push_back(0);
+  y.push_back(0);
+  
   ledMatrix[0][2] = CRGB::Blue; // turn the snake leds on
   ledMatrix[0][1] = CRGB::Blue;
   ledMatrix[0][0] = CRGB::Blue;
 
-  for(int row = 0; row <= 16; row++){ // put the rest of the leds into the vector of unoccupied leds
-    for(int col = 0; col <= 16; col++){
-      if( !(row == 0 && col <= 2) ){
-        unoccupiedLeds.push_back(ledMatrix[row][col]);
+  for(int row = 0; row < 16; row++){ // put the rest of the leds into the list of unoccupied leds
+    for(int col = 0; col < 16; col++){
+      if( !(row == 0 && col <= 2) ){ // if the led is not initially part of the snake
+        
+        unoccupiedX.push_back(row);
+        unoccupiedY.push_back(col);
+        
         ledMatrix[row][col] = CRGB::Black;
+        FastLED.show();
+        
       }
     }
   }
@@ -149,39 +193,6 @@ void initializeVectors(){
 }
 
 void initializeLedMatrix(){
-
-  CRGB leds0[16]; // allocate memory for each led strip
-  memcpy(ledMatrix[0], leds0, 16); // copy them into the array of arrays
-  CRGB leds1[16];
-  memcpy(ledMatrix[1], leds1, 16);
-  CRGB leds2[16];
-  memcpy(ledMatrix[2], leds2, 16);
-  CRGB leds3[16];
-  memcpy(ledMatrix[3], leds3, 16);
-  CRGB leds4[16];
-  memcpy(ledMatrix[4], leds4, 16);
-  CRGB leds5[16];
-  memcpy(ledMatrix[5], leds5, 16);
-  CRGB leds6[16];
-  memcpy(ledMatrix[6], leds6, 16);
-  CRGB leds7[16];
-  memcpy(ledMatrix[7], leds7, 16);
-  CRGB leds8[16];
-  memcpy(ledMatrix[8], leds8, 16);
-  CRGB leds9[16];
-  memcpy(ledMatrix[9], leds9, 16);
-  CRGB leds10[16];
-  memcpy(ledMatrix[10], leds10, 16);
-  CRGB leds11[16];
-  memcpy(ledMatrix[11], leds11, 16);
-  CRGB leds12[16];
-  memcpy(ledMatrix[12], leds12, 16);
-  CRGB leds13[16];
-  memcpy(ledMatrix[13], leds13, 16);
-  CRGB leds14[16];
-  memcpy(ledMatrix[14], leds14, 16);
-  CRGB leds15[16];
-  memcpy(ledMatrix[15], leds15, 16);
 
   FastLED.addLeds<NEOPIXEL, 14>(ledMatrix[0], 16); // initialize each strip of leds
   FastLED.addLeds<NEOPIXEL, 15>(ledMatrix[1], 16);
