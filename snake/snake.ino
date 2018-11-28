@@ -52,10 +52,10 @@ int foodX = 0;
 int foodY = 8;
 bool snakeHasEaten = false;
 
-/*WiFiServer server(80);
+WiFiServer server(80);
 int status = WL_IDLE_STATUS;
 char ssid[] = "CSE321_SNAKE";
-//char password[] = "kurtandpaul";*/
+//char password[] = "kurtandpaul";
 
 void setup() {
 
@@ -66,24 +66,24 @@ void setup() {
 
  // WiFi.setPins(8,7,4,2);
 
-  /*Serial.begin(9600);
+  Serial.begin(9600);
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
-  }*/
+  }
 
-  /*if (WiFi.status() == WL_NO_SHIELD) {while(true);} // check for presence of WiFi
+  if (WiFi.status() == WL_NO_SHIELD) {while(true);} // check for presence of WiFi
 
   status = WiFi.beginAP(ssid); // create network
   if (status != WL_AP_LISTENING) {while(true);} // if creation of access point failed
 
   delay(10000);
   //while(WiFi.status() != WL_CONNECTED){ Serial.println( WiFi.status() ); } // wait for connection
-  server.begin(); // start server when connected*/
+  server.begin(); // start server when connected
   
 }
 
 void loop() {
-/*Serial.println("Loop started");
+Serial.println("Loop started");
   WiFiClient client = server.available(); // check for incoming clients
   if(client){ // if there is a client
     if(client.available()){ // if there is something to read from the client
@@ -91,7 +91,7 @@ void loop() {
        // change the direction of the snake based on the remote input
       Serial.println(currentDirection);
     }
-  }*/
+  }
 
   // update the position of where the head will be based on the direction of the snake
   if(currentDirection == 'u'){currentRow--;}
@@ -212,9 +212,9 @@ void initializeLedMatrix(){
   FastLED.addLeds<NEOPIXEL, 17>(ledMatrix[3], 16);
   FastLED.addLeds<NEOPIXEL, 18>(ledMatrix[4], 16);
   FastLED.addLeds<NEOPIXEL, 19>(ledMatrix[5], 16);
- // FastLED.addLeds<NEOPIXEL, 0>(ledMatrix[6], 16);
-  //FastLED.addLeds<NEOPIXEL, 1>(ledMatrix[7], 16);
-  //FastLED.addLeds<NEOPIXEL, 20>(ledMatrix[8], 16);
+  FastLED.addLeds<NEOPIXEL, 0>(ledMatrix[6], 16);
+  FastLED.addLeds<NEOPIXEL, 1>(ledMatrix[7], 16);
+  FastLED.addLeds<NEOPIXEL, 20>(ledMatrix[8], 16);
   FastLED.addLeds<NEOPIXEL, 13>(ledMatrix[9], 16);
   FastLED.addLeds<NEOPIXEL, 12>(ledMatrix[10], 16);
   FastLED.addLeds<NEOPIXEL, 11>(ledMatrix[11], 16);
