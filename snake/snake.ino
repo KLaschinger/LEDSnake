@@ -61,10 +61,10 @@ void setup() {
 
   initializeLedMatrix();
   initializeVectors();
-  ledMatrix[0][8] = CRGB::Green;
+  ledMatrix[0][8] = CRGB::Green; // initial spot for the food
   FastLED.show();
 
- // WiFi.setPins(8,7,4,2);
+  WiFi.setPins(8,7,4,2); // necessary for the Feather board
 
   Serial.begin(9600);
   while (!Serial) {
@@ -76,20 +76,18 @@ void setup() {
   status = WiFi.beginAP(ssid); // create network
   if (status != WL_AP_LISTENING) {while(true);} // if creation of access point failed
 
-  delay(10000);
-  //while(WiFi.status() != WL_CONNECTED){ Serial.println( WiFi.status() ); } // wait for connection
+  delay(10000); // wait for connection
   server.begin(); // start server when connected
   
 }
 
 void loop() {
-Serial.println("Loop started");
+
   WiFiClient client = server.available(); // check for incoming clients
   if(client){ // if there is a client
     if(client.available()){ // if there is something to read from the client
       if((char)client.read() != 0x00){currentDirection = (char)client.read();}
        // change the direction of the snake based on the remote input
-      Serial.println(currentDirection);
     }
   }
 
